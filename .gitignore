@@ -1,3 +1,5 @@
+.lein*
+.nrepl*
 target/
 tmp/
 logs/

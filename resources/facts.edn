@@ -1,0 +1,13 @@
+{:db/id #db/id[:db.part/user -1]
+ :model/type :user
+ :model/id #uuid "0414e99d-7fca-411e-81ad-2952404bd5ef"
+ :user/email "imaf@ke.com"
+ :user/firstname "Ima"
+ :user/lastname "Fake"}
+
+{:db/id #db/id[:db.part/user -2]
+ :model/type :user
+ :model/id #uuid "809407e2-8ba4-4a73-9c2f-c5672797ea77"
+ :user/email "imanotherf@ke.com"
+ :user/firstname "Imanother"
+ :user/lastname "Fake"}

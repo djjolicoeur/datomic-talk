@@ -1,0 +1,72 @@
+;;; For entities that are to be referenced from external services, it is
+;;  important to have consitent unique identifiers.  A restore of the DB
+;;  is not guarunteed to produce the same db/id for each entity, thus I
+;;  generally create a "model" that consists of a type and a unique
+;;  identifier (UUID) and base my APIs off of the UUID.
+
+;;Model
+{;;ID of the attribute itself, auto-assign to the DB partition
+ :db/id #db/id[:db.part/db]
+ ;; Attribute name
+ :db/ident :model/type
+ ;; Attribute value type
+ :db/valueType :db.type/keyword
+ ;; cardinality of attribute (one | many)
+ :db/cardinality :db.cardinality/one
+ ;; where to install the attribute, which partition
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :model/id
+ :db/valueType :db.type/uuid
+ :db/cardinality :db.cardinality/one
+ :db/unique :db.unique/value
+ :db.install/_attribute :db.part/db}
+
+;; User
+{:db/id #db/id[:db.part/db]
+ :db/ident :user/email
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db/unique :db.unique/value
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :user/firstname
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :user/lastname
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo.status/waiting}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo.status/started}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo.status/complete}
+
+;;ToDo
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo/title
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo/status
+ :db/valueType :db.type/ref
+ :db/cardinality :db.cardinality/one
+ :db.install/_attribute :db.part/db}
+
+{:db/id #db/id[:db.part/db]
+ :db/ident :todo/user
+ :db/valueType :db.type/ref
+ :db/cardinality :db.cardinality/one
+ :db.install/_attribute :db.part/db}
