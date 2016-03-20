@@ -16,12 +16,11 @@
    params should be ordered as they should be
    injected into a 'datomic.api/q' call"
   [qname query pull & params]
-  (let [default-pattern# '[*]]
-   `(do
-      (def ~qname identity)
-      (def ~(generate-query-symbol qname) {:query ~query
-                                           :pull ~pull
-                                           :params (quote ~params)}))))
+  `(do
+     (def ~qname identity)
+     (def ~(generate-query-symbol qname) {:query ~query
+                                          :pull ~pull
+                                          :params (quote ~params)})))
 
 (defn path-params->uuids
   "Parse string path params to UUIDs.  It may be
