@@ -115,11 +115,11 @@
 
 (def entity-response-interceptor
   (interceptor
-   {:name ::inject-query
+   {:name ::inject-response
     :leave
     (fn [{:keys [route request] :as context}]
-      (log/info :task ::inject-query
-                :route route)
+      (log/info :task ::inject-response
+                :route (:route-name route))
       (if-let [resp (:query-result request)]
         (assoc-in context [:response] (ring/response resp))
         (assoc-in context [:response] (ring/not-found {}))))}))
