@@ -11,3 +11,32 @@
  :user/email "imanotherf@ke.com"
  :user/firstname "Imanother"
  :user/lastname "Fake"}
+
+
+{:db/id #db/id[:db.part/user]
+ :model/type :todo
+ :model/id #uuid "73d71c37-3b68-43d2-b71d-f913c8422450"
+ :todo/user #db/id[:db.part/user -1]
+ :todo/title "Write Datomic Talk!"
+ :todo/status :todo.status/waiting}
+
+{:db/id #db/id[:db.part/user]
+ :model/type :todo
+ :model/id #uuid "b4c89874-8abe-46d6-833a-a6d77452f682"
+ :todo/user #db/id[:db.part/user -1]
+ :todo/title "Give Datomic Talk!"
+ :todo/status :todo.status/waiting}
+
+{:db/id #db/id[:db.part/user]
+ :model/type :todo
+ :model/id #uuid "24bf6e42-dbe1-415b-ab23-400020870dcd"
+ :todo/user #db/id[:db.part/user -2]
+ :todo/title "Write Om-next Talk!"
+ :todo/status :todo.status/waiting}
+
+{:db/id #db/id[:db.part/user]
+ :model/type :todo
+ :model/id #uuid "2c179626-2080-4bdf-a551-39481acb21a7"
+ :todo/user #db/id[:db.part/user -2]
+ :todo/title "Give Om-next Talk!"
+ :todo/status :todo.status/waiting}
