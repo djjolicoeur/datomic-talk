@@ -1,5 +1,6 @@
 (ns datomic-talk.query
   (:require [datomic.api :as d]
+            [datomic-talk.schema :as schema]
             [io.pedestal.interceptor :refer [interceptor]]
             [io.pedestal.log :as log]
             [ring.util.response :as ring]))
@@ -67,9 +68,11 @@
     :where [?u :model/type :user]]
   user-pattern)
 
+
+;; To Dos
 (def todo-pattern
   '[* {:todo/status [:db/ident]
-       :todo/user [:db/id :user/firstname :user/lastname]}])
+       :todo/user [:db/id]}])
 
 (defquery todo
   '[:find (pull ?t pattern) .
@@ -90,6 +93,11 @@
   :user-id)
 
 ;; Map of routes to queries
+;; Pedestal associates :route-name
+;; to each route, which happens to be the keyword
+;; of the fully qualified fn name of the route handler.
+;; We can use this to match to the matching query spec.
+;; TODO: Investigate more elegant solution. -DJJ
 (def route->query
   {:datomic-talk.query/user user*
    :datomic-talk.query/users users*
@@ -99,7 +107,9 @@
 
 ;; Pedestal interceptor. If a route has an associated
 ;; query, apply the query to the request params and
-;; assoc the result in the request context as :query-result
+;; assoc the result in the request context as :query-result.
+;; If not query is specified for this route, pass the original
+;; context, unchanged.
 (def query-interceptor
   (interceptor
    {:name ::inject-query
@@ -111,6 +121,17 @@
         (assoc-in context [:request :query-result] (query q request))
         context))}))
 
+(defn export-response
+  "Given a query response, export it to the appropriate
+   schema.  Maps will be treated as single entities,
+   sequences as a sequence of entities. Sequences not
+   meeting those conditions will be returned unchanged"
+  [resp]
+  (cond
+    (map? resp) (schema/export-entity resp)
+    (seq resp) (mapv schema/export-entity resp)
+    true resp))
+
 
 (def entity-response-interceptor
   (interceptor
@@ -120,5 +141,5 @@
       (log/info :task ::inject-response
                 :route (:route-name route))
       (if-let [resp (:query-result request)]
-        (assoc-in context [:response] (ring/response resp))
-        (assoc-in context [:response] (ring/not-found {}))))}))
+        (assoc  context :response (ring/response (export-response resp)))
+        (assoc  context :response (ring/not-found {}))))}))
