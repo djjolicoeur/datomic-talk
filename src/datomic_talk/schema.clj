@@ -1,5 +1,7 @@
 (ns datomic-talk.schema
-  (:require [schema.core :as s]
+  (:require [datomic.api :as d]
+            [datomic-talk.merge :as merge]
+            [schema.core :as s]
             [schema.coerce :as c]
             [schema.macros :as macros]
             [schema.spec.core :as spec]
@@ -39,12 +41,15 @@
 (defn update-schema [base]
   (merge base {(s/required-key :db/id) s/Int}))
 
-(def User
+(def Model
   {(s/optional-key :model/id) s/Uuid
-   (s/optional-key :model/type) s/Keyword
-   (s/optional-key :user/firstname) s/Str
-   (s/optional-key :user/lastname) s/Str
-   (s/optional-key :user/email) s/Str})
+   (s/required-key :model/type) s/Keyword})
+
+(def User
+  (merge Model
+         {(s/optional-key :user/firstname) s/Str
+          (s/optional-key :user/lastname) s/Str
+          (s/optional-key :user/email) s/Str}))
 
 (def new-user (c/coercer User c/json-coercion-matcher))
 
@@ -53,11 +58,10 @@
 (def export-user (c/coercer (update-schema User) datomic-coercion-matcher))
 
 (def Todo
-  {(s/optional-key :model/id) s/Uuid
-   (s/optional-key :model/type) s/Keyword
-   (s/optional-key :todo/title) s/Str
-   (s/optional-key :todo/status) s/Keyword
-   (s/optional-key :todo/user) s/Int})
+  (merge Model
+         {(s/optional-key :todo/title) s/Str
+          (s/optional-key :todo/status) s/Keyword
+          (s/optional-key :todo/user) s/Int}))
 
 
 (def new-todo (c/coercer Todo c/json-coercion-matcher))
@@ -74,3 +78,22 @@
 (defmethod export-entity :todo [e] (export-todo e))
 
 (defmethod export-entity :default [e] e)
+
+(defmulti new-entity (fn [e] (keyword (:model/type e))))
+
+(defmulti update-entity (fn [e] (keyword (:model/type e))))
+
+(defn base-attrs [e]
+  (assoc e :db/id (d/tempid :db.part/user) :model/id (d/squuid)))
+
+(defmethod new-entity :user [e]
+  (base-attrs (new-user e)))
+
+(defmethod update-entity :user [e]
+  (update-user e))
+
+(defmethod new-entity :todo [e]
+  (base-attrs (new-todo e)))
+
+(defmethod update-entity :todo [e]
+  (update-todo e))

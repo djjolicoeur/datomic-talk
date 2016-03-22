@@ -124,7 +124,7 @@
 (defn export-response
   "Given a query response, export it to the appropriate
    schema.  Maps will be treated as single entities,
-   sequences as a sequence of entities. Sequences not
+   sequences as a sequence of entities. resp not
    meeting those conditions will be returned unchanged"
   [resp]
   (cond
@@ -132,6 +132,11 @@
     (seq resp) (mapv schema/export-entity resp)
     true resp))
 
+(defn interceptor-response
+  [request]
+  (->> request
+       ((juxt :query-result :post-result :put-result))
+       (some identity)))
 
 (def entity-response-interceptor
   (interceptor
@@ -140,6 +145,6 @@
     (fn [{:keys [route request] :as context}]
       (log/info :task ::inject-response
                 :route (:route-name route))
-      (if-let [resp (:query-result request)]
+      (if-let [resp (interceptor-response request)]
         (assoc  context :response (ring/response (export-response resp)))
         (assoc  context :response (ring/not-found {}))))}))

@@ -16,7 +16,8 @@
                   :exclusions [org.clojure/tools.namespace
                                suspendable]]
                  [suspendable "0.1.1"]
-                 [prismatic/schema "1.0.5"]]
+                 [prismatic/schema "1.0.5"]
+                 [clj-http "2.1.0"]]
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   :profiles {:dev {:source-paths ["dev"]
