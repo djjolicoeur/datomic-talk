@@ -1,7 +1,9 @@
 (ns datomic-talk.service
   (:require [datomic-talk.query :as query]
+            [datomic-talk.schema :as schema]
             [datomic-talk.post :as post]
             [datomic-talk.put :as put]
+            [io.pedestal.interceptor :refer [interceptor]]
             [io.pedestal.http :as bootstrap]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
@@ -9,6 +11,41 @@
             [io.pedestal.http.ring-middlewares :as middlewares]
             [io.pedestal.log :as log]
             [ring.util.response :as ring-resp]))
+
+
+;;Response Interceptor
+
+(defn export-response
+  "Given a query response, export it to the appropriate
+   schema.  Maps will be treated as single entities,
+   sequences as a sequence of entities. resp not
+   meeting those conditions will be returned unchanged"
+  [resp]
+  (cond
+    (map? resp) (schema/export-entity resp)
+    (seq resp) (mapv schema/export-entity resp)
+    true resp))
+
+(defn interceptor-response
+  "Pull any interceptor generated responses"
+  [request]
+  (->> request
+       ((juxt :query-result :post-result :put-result))
+       (some identity)))
+
+(def entity-response-interceptor
+  (interceptor
+   {:name ::inject-response
+    :leave
+    (fn [{:keys [route request] :as context}]
+      (log/info :task ::inject-response
+                :route (:route-name route))
+      (if-let [resp (interceptor-response request)]
+        (assoc  context :response (ring-resp/response (export-response resp)))
+        (assoc  context :response (ring-resp/not-found {}))))}))
+
+
+;; Handlers
 
 (defn about-page
   [request]
@@ -42,7 +79,7 @@
                                post/entity-post-interceptor
                                put/entity-put-interceptor
                                query/query-interceptor
-                               query/entity-response-interceptor]
+                               entity-response-interceptor]
        ["/users" {:get query/users
                   :post post/user}
         ["/:user-id" {:get query/user

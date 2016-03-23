@@ -23,6 +23,7 @@
       (update-in
        context [:request]
        merge
+
        {:dbval (-> db :conn d/db)
         :db (:conn db)}))}))
 

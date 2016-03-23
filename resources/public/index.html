@@ -14,6 +14,8 @@
       font-weight: normal;
       }
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .image-75 img {width: 75%; height: 75%;}
+      .image-50 img {width: 50%; height: 50%;}
     </style>
   </head>
   <body>
@@ -33,8 +35,10 @@ class: center, middle
   1. Introduction
   2. What is Datomic?
   3. Why do we use it?
-  4. How do we use it?
-
+  4. Architecture
+  5. How do we use it?
+     * High Level
+     * Programmatically (examples)
 ---
 
 name: intro
@@ -42,30 +46,313 @@ class: center, middle
 
 # Introduction
 
----
-
-template: intro
-count: false
-
 Daniel Jolicoeur
-
----
-
-template: intro
-count: false
 
 Software Engineer @ ICX Media
 
+Clojure Developer for several years
+
+Datomic user for the last 3 years
+
 ---
 
-template: intro
+name: datomic
+# What is Datomic?
+
+---
+
+name: datomic-1
+template: datomic
 count: false
 
-Professional Datomic user for several years
+ * ACID Compliant Database
 
 ---
 
-# What is Datomic?
+name: datomic-2
+template: datomic-1
+count: false
+
+ * Seperation of concerns
+
+---
+
+name: datomic-3
+template: datomic-2
+count: false
+    * Distributed, local reads
+    * Consolidated writes
+---
+
+name: datomic-4
+template: datomic-3
+count: false
+
+ * Datalog Query interface
+
+---
+
+name: datomic-5
+template: datomic-4
+count: false
+
+* Persistence is backed by battle tested storage solutions
+
+   * MySQL
+   * Cassandra
+   * Riak
+   * DyanmoDB
+   * Couchbase
+   * Infinispan
+---
+
+name: why
+
+Why do we use Datomic?
+
+---
+name: why-1
+template: why
+count: false
+
+ * Allows for a flexible schema
+
+---
+name: why-2
+template: why-1
+count: false
+
+ * ...Yet still allows for efficient relational queries
+
+---
+
+name: why-3
+template: why-2
+count: false
+
+ * Fault tolerant + Highly Available
+
+---
+
+name: why-4
+template: why-3
+count: false
+
+ * Good trade off between Strict RDBMS and NoSQL Solutions.
+
+---
+
+name: why-5
+template: why-4
+count: false
+
+ * Painless cross-database queries
+
+---
+
+name: why-6
+template: why-5
+count: false
+
+ * fast consistent, local reads
+
+---
+name: arch
+
+Architecture
+
+---
+
+name: arch-1
+template: arch
+count: false
+
+![arch](img/datomic-arch.png)
+
+---
+
+name: how
+
+How Do We Use it?
+ * High level discussion
+ * Implementation discussion
+
+---
+
+name: hl
+
+High Level
+
+---
+
+name: hl-1
+template: hl
+count: false
+
+ * Ask datomic for the current value
+
+---
+
+name: hl-2
+template: hl-1
+count: false
+
+ * Datomic gives us an immutable value for the database
+
+---
+
+name: hl-3
+template: hl-2
+count: false
+
+ * We make changes against that immutable database
+
+---
+
+name: hl-4
+template: hl-3
+count: false
+
+* We submit our changes to the transactor to become part of the root index
+
+---
+
+name: git
+
+Wait this sounds familiar...
+
+---
+
+name: git-1
+template: git
+count: false
+
+.image-50[![git](img/git-goodness.gif)]
+
+---
+
+name: impl
+
+Implementation
+
+---
+
+name: values
+
+Values
+
+---
+
+name: val-1
+template: values
+count: false
+
+ * Values are the most basic unit in the datomic model
+   * Strings
+   * Longs
+   * Floats
+   * Keywords
+   * References*
+   * Components*
+---
+name: attr
+
+Attributes
+
+ * Identifiers for values
+ * Describe Values
+ * Place constraints on Values
+
+---
+name: attr-1
+template: attr
+count: false
+
+```clojure
+
+{;;ID of the attribute itself, auto-assign to the DB partition
+ :db/id #db/id[:db.part/db]
+ ;; Attribute name
+ :db/ident :model/type
+ ;; Attribute value type
+ :db/valueType :db.type/keyword
+ ;; cardinality of attribute (one | many)
+ :db/cardinality :db.cardinality/one
+ ;; where to install the attribute, which partition
+ :db.install/_attribute :db.part/db}
+
+ {:db/id #db/id[:db.part/db]
+  :db/ident :model/id
+  :db/valueType :db.type/uuid
+  :db/cardinality :db.cardinality/one
+  :db/unique :db.unique/value
+  :db.install/_attribute :db.part/db}
+```
+
+---
+
+name: ent
+
+Entities
+ * Long ID
+ * We associate _values_ with entities via _attributes_
+
+---
+
+name: ent-1
+template: ent
+count: false
+
+```clojure
+{:db/id 17592186045418
+ :model/type :user
+ :model/id #uuid "0414e99d-7fca-411e-81ad-2952404bd5ef"
+ :user/email "imaf@ke.com"
+ :user/firstname "Ima"
+ :user/lastname "Fake"}
+```
+---
+
+name: ent-2
+template: ent-1
+count: false
+
+ * This, however, is an abstraction. The data is stored more like this
+
+```clojure
+[17592186045418 :model/type :user]
+[17592186045418 :model/id #uuid "0414e99d-7fca-411e-81ad-2952404bd5ef"]
+[17592186045418 :user/email "imaf@ke.com"]
+[17592186045418 :user/firstname "Ima"]
+[17592186045418 :user/lastname "Fake"]
+```
+ * A collection of related facts associated by the :db/id
+
+---
+
+Transactions
+ * Time datum/fact was transacted
+ * metadata about transaction (id, etc...)
+ * For the moment, we are going to ignore Transactions values
+
+---
+
+Indexes
+
+ * How the data is logically stored
+ * `[Entity Attribute Value Transaction]` -- All
+ * `[Attribute Entity Value Transaction]` -- All
+ * `[Value Attribute Entity Transaction]` -- References
+ * `[Attribute Value Entity Transaction]` -- unique/indexed
+
+---
+
+Example Application
+
+
+
+
+
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
